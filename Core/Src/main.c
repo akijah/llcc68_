@@ -25,9 +25,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "maincpp.h"
+#include "peripheral.h"
+#include "rev.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,14 +51,29 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+RTC_HandleTypeDef hrtc;
+
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart1;
-DMA_HandleTypeDef hdma_usart1_tx;
+DMA_HandleTypeDef hdma_usart1_rx;
 
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
+osThreadId_t CliTaskHandle;
+const osThreadAttr_t CliTask_attributes = {
+  .name = "CliTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 
 /* USER CODE END PV */
 
@@ -64,6 +84,9 @@ static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_RTC_Init(void);
+void StartDefaultTask(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 
@@ -110,12 +133,53 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_TIM1_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
-  maincpp();
+ // maincpp();
 
   /* USER CODE END 2 */
 
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  CliTaskHandle = osThreadNew(StartCliTask, NULL, &CliTask_attributes);
+
+
+
+
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
@@ -134,14 +198,16 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
@@ -162,6 +228,69 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef DateToUpdate = {0};
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.AsynchPrediv = RTC_AUTO_1_SECOND;
+  hrtc.Init.OutPut = RTC_OUTPUTSOURCE_ALARM;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* USER CODE BEGIN Check_RTC_BKUP */
+
+  /* USER CODE END Check_RTC_BKUP */
+
+  /** Initialize RTC and set the Time and Date
+  */
+  sTime.Hours = 0x0;
+  sTime.Minutes = 0x0;
+  sTime.Seconds = 0x0;
+
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  DateToUpdate.WeekDay = RTC_WEEKDAY_MONDAY;
+  DateToUpdate.Month = RTC_MONTH_JANUARY;
+  DateToUpdate.Date = 0x1;
+  DateToUpdate.Year = 0x0;
+
+  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
+
 }
 
 /**
@@ -264,7 +393,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 9600;
+  huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -291,9 +420,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Channel4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
 
 }
 
@@ -319,7 +448,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, RFM_RESET_Pin|GPIO_PIN_10|GPIO_PIN_11, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, RFM_RESET_Pin|TXEN_Pin|RXEN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;
@@ -354,15 +483,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(MODE_IN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB10 PB11 */
-  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11;
+  /*Configure GPIO pins : TXEN_Pin RXEN_Pin */
+  GPIO_InitStruct.Pin = TXEN_Pin|RXEN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
 }
@@ -370,6 +499,35 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  int k=0;
+
+  /* Infinite loop */
+	printf("%s Ver.%s %s %s\n", T_USTR ,REV_NUM,REV_DATE, REV_TIME);
+  for(;;)
+  {
+
+		 for(;;)
+		 { HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
+			printf("%04d\n",k);k++;
+		    osDelay(10000);
+		 }
+
+
+	  osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
 
  /**
   * @brief  Period elapsed callback in non blocking mode

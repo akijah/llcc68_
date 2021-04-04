@@ -69,6 +69,10 @@ void Error_Handler(void);
 #define RFM_RESET_GPIO_Port GPIOB
 #define MODE_IN_Pin GPIO_PIN_1
 #define MODE_IN_GPIO_Port GPIOB
+#define TXEN_Pin GPIO_PIN_10
+#define TXEN_GPIO_Port GPIOB
+#define RXEN_Pin GPIO_PIN_11
+#define RXEN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

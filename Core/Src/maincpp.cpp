@@ -1,179 +1,128 @@
 
 #include "main.h"
 #include "maincpp.h"
+#include "stdio.h"
+#include "string.h"
+
+#include "cmsis_os.h"
+#include "peripheral.h"
+#include "parse.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-//--------------------------------LORA CONFIGURATION------------------------
 
-uint8_t volatile Flag = 0;
 
-uint8_t RX_BUF[16] = {};
-uint8_t TX_BUF[16] = {'T','e','s','t'};
-uint8_t i = 0, rx_bytes;
-uint8_t rssi, fr_rssi, snr, act_RFM = 6;
-uint8_t uart1rxbyte;
 
-uint8_t isTX()
-{
-	GPIO_PinState s = HAL_GPIO_ReadPin(MODE_IN_GPIO_Port, MODE_IN_Pin);
-    if (s == GPIO_PIN_SET) return 1;
-    return 0;
-}
+//Add to stm32f1xx_hal_dma.h
 
-uint8_t SX1276_WriteSingle(uint8_t command, uint8_t value) 													{//WriteSingle
 
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+static uint8_t RXBuf1[MAX_RXCYCL_BUF];
+static uint8_t const *rx1_tail_ptr;
+extern UART_HandleTypeDef huart1;
 
-uint8_t outdata[2];
-uint8_t indata[2] = {};
-outdata[0] = (WRITE_SINGLE | command);
-outdata[1] = value;
 
-HAL_StatusTypeDef hr;
-
-hr = HAL_SPI_TransmitReceive(&hspi1, outdata, indata, 2, 1);
-
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
-
-if (hr == HAL_OK)
-	return indata[1];
-return 0;
-}
-
-uint8_t SX1276_ReadSingle(uint8_t command) 																					{//ReadSingle
-
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-//while (GPIOA->IDR & MISO){};							//waiting until CC1101 ready
-
-uint8_t outdata[1];
-uint8_t indata[1] = {};
-HAL_StatusTypeDef hr;
-
-outdata[0] = (READ_SINGLE | command);
-hr = HAL_SPI_TransmitReceive(&hspi1, outdata, indata, 1, 1);
-if (hr != HAL_OK)
-{
- hr = hr;
-}
-outdata[0] = 0;
-hr = HAL_SPI_TransmitReceive(&hspi1, outdata, indata, 1, 1);
-if (hr != HAL_OK)
-{
- hr = hr;
-}
-
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
-
-return indata[0];
-}
-
-void SX1276_WriteBurst( uint8_t addr, uint8_t *buff, uint8_t size )
-{//WriteBurst
-
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-
-uint8_t outdata[1];
-uint8_t indata[1] = {};
-outdata[0] = (WRITE_SINGLE | addr);
-HAL_SPI_TransmitReceive(&hspi1, outdata, indata, 1, 1);
-
-HAL_SPI_Transmit(&hspi1, buff, size, 1);
-
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
-}
-
-void SX1276_ReadBurst( uint8_t command, uint8_t *buff, uint8_t size )
-{//ReadBurst
-
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-
-uint8_t outdata[1];
-uint8_t indata[1] = {};
-outdata[0] = (READ_SINGLE | command);
-HAL_SPI_TransmitReceive(&hspi1, outdata, indata, 1, 1);
-
-HAL_SPI_Receive(&hspi1, buff, size, 1);
-
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
-}
-
-void SX1276_Init(void)
-{//CC1101_Init
- uint8_t qnt, i_temp=0;
- qnt =0;// sizeof (LoRa_config);
-
-HAL_GPIO_WritePin(RFM_RESET_GPIO_Port, RFM_RESET_Pin, GPIO_PIN_RESET);
-HAL_Delay(10);
-HAL_GPIO_WritePin(RFM_RESET_GPIO_Port, RFM_RESET_Pin, GPIO_PIN_SET);
-HAL_Delay(10);
-
- while (i_temp < qnt)
- {
-	//SX1276_WriteSingle(LoRa_config[i_temp], LoRa_config[i_temp+1]);
-	i_temp += 2;
- }
-
-  //SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_SLEEP|0x80);
-}
-
-size_t WaitFor(volatile uint8_t& v, size_t waitcnt)
-{
-	size_t cur_time = HAL_GetTick();
-	while(!v)
-	{
-		__WFE();
-		size_t time = HAL_GetTick();
-		while (time != cur_time)
-		{
-			cur_time++;
-			waitcnt--;
-			if (!waitcnt) return 0;
+//UART1 Cyclic Buf------------------------------------------------------------------------------------------
+static char GetRX1Buf(void)
+{  uint8_t const * head = RXBuf1+MAX_RXCYCL_BUF - __HAL_DMA_GET_COUNTER(huart1.hdmarx);
+	 uint8_t const * tail = rx1_tail_ptr;
+	// uint32_t  ll1 = __HAL_DMA_GET_COUNTER(huart1.hdmarx);
+	 char c;
+	  if(head!=tail)
+		{ c =  *rx1_tail_ptr++;
+			if(rx1_tail_ptr>=RXBuf1 +MAX_RXCYCL_BUF) rx1_tail_ptr-=MAX_RXCYCL_BUF;
+			return c;
 		}
-	}
-	return waitcnt;
+		else return 0;
 }
+//------------------------------------------------------------------------------------------------------
+static void ClrRX1Buf(void)
+{	memset(RXBuf1,0,MAX_RXCYCL_BUF);
+	__HAL_DMA_SET_COUNTER(huart1.hdmarx,MAX_RXCYCL_BUF);
+	rx1_tail_ptr=RXBuf1;
 
-void GoStandby()
+}
+//------------------------------------------------------------------------------------------------------
+
+
+
+void StartCliTask(void const * argument)
 {
-	 // SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_STANDBY|0x80);
+   char c;
+   static char p1;
+   char R[200];
+   uint8_t R_Ptr=0;
+   HAL_UART_Receive_DMA(&huart1,RXBuf1,MAX_RXCYCL_BUF);
+   ClrRX1Buf();
+   printf("Init CliTask ok\n");
+   p1=0;
+   for(;;)
+   {	 c= GetRX1Buf();
+        if(c!='\0')
+        { //if(((c=='.')||(c==','))&&(Cc==0)) {Cc=c; continue;};
+		   //if(Cc==0) {cliProcess((uint8_t*)&c); continue;}
+		   if((c!='\r')&&(c!='\n')&&(c!=';'))
+			 { if(p1==0)
+				 {  if((uint8_t)c<0x80)
+				 	  { //To UpCase
+							// if(((uint8_t)c>=0x61)&&((uint8_t)c<=0x7A)) c-=0x20;
+							 R[R_Ptr++]=c;
+						}
+						else
+						{ p1=c;
+						}
+				 }
+				 else
+				 { //To UpCase
+
+					// if(((uint8_t)p1==0xD0)&&((uint8_t)c>=0xB0)&&((uint8_t)c<=0xBF)) c-=0x20;
+					// else
+					// if(((uint8_t)p1==0xD1)&&((uint8_t)c>=0x80)&&((uint8_t)c<=0x8F))	{p1=0xD0; c+=0x20;}
+					// else
+					// if(((uint8_t)p1==0xD1)&&((uint8_t)c==0x91)) {p1=0xD0; c=0x81;};
+					 R[R_Ptr++]=p1;
+					 R[R_Ptr++]=c;
+					 p1=0;
+				 };
+				 continue;
+			};
+			if(((c=='\r')||(c==';'))&&(R_Ptr>0))
+			{  R[R_Ptr++]='\r';
+				 R[R_Ptr++]=0;
+				 CmdPerform((char*)R);
+				 R_Ptr=0;
+			}
+
+		 }
+		 osDelay(100);
+	 }
+
 }
 
-void Transmit(uint8_t* data, size_t len)
-{
-/*	  SX1276_WriteSingle(REG_LR_DIOMAPPING1,	RFLR_DIOMAPPING1_DIO0_01);
-	  SX1276_WriteSingle(REG_LR_SYNCWORD,0x12);
-	  SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_STANDBY|0x80);
-	  SX1276_WriteSingle(REG_LR_FIFOADDRPTR,0x80);
-	  SX1276_WriteBurst( REG_LR_FIFO, data, len);
-	  SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_TRANSMITTER|0x80);*/
-}
-
-void GoReceive()
-{
-/*	  SX1276_WriteSingle(REG_LR_DIOMAPPING1,	RFLR_DIOMAPPING1_DIO0_00);
-	  SX1276_WriteSingle(REG_LR_SYNCWORD,0x12);
-	  SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_SLEEP|0x80);
-	  SX1276_WriteSingle(REG_LR_FIFOADDRPTR,0x00);
-	  SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_RECEIVER|0x80);*/
-}
-
-int Receive()
-{
-  /*	rx_bytes = SX1276_ReadSingle(REG_LR_RXNBBYTES);
-  	rssi = SX1276_ReadSingle(REG_LR_PKTRSSIVALUE);
-  	rssi = rssi;
-  	snr= SX1276_ReadSingle(REG_LR_PKTSNRVALUE);
-  	snr = snr;
-  	SX1276_ReadBurst( REG_LR_FIFO, RX_BUF, rx_bytes);
-  	return rx_bytes;*/
-}
 
 
-void maincpp()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*void maincpp()
 {
 	HAL_UART_Receive_IT(&huart1, &uart1rxbyte, 1);
 	SX1276_Init();
@@ -273,25 +222,26 @@ void maincpp()
 		} // tx mode
 	} // main while
 }
-
+*/
+/*
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  /* Prevent unused argument(s) compilation warning */
   UNUSED(huart);
-  /* NOTE: This function should not be modified, when the callback is needed,
-           the HAL_UART_RxCpltCallback could be implemented in the user file
-   */
   if (huart == &huart1)
   {
 	  //rxqueue.push(uart1rxbyte);
 	  HAL_UART_Receive_IT(&huart1, &uart1rxbyte, 1);
   }
 }
-
+*/
+/*
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   Flag = 1;
 }
+*/
+//------------------------------------------------------------------------
+
 
 #ifdef __cplusplus
 }

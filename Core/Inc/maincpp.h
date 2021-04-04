@@ -25,7 +25,11 @@ SPI_HandleTypeDef hspi1;
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_tx;
 
-void maincpp();
+
+void StartCliTask(void const * argument);
+
+
+//void maincpp();
 
 #ifdef __cplusplus
 }
