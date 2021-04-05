@@ -56,20 +56,21 @@ void StartCliTask(void const * argument)
    uint8_t R_Ptr=0;
    HAL_UART_Receive_DMA(&huart1,RXBuf1,MAX_RXCYCL_BUF);
    ClrRX1Buf();
-   printf("Init CliTask ok\n");
+
+  // printf("Init Cli Task ok\n");
    p1=0;
    for(;;)
-   {	 c= GetRX1Buf();
+   {	c= GetRX1Buf();
         if(c!='\0')
         { //if(((c=='.')||(c==','))&&(Cc==0)) {Cc=c; continue;};
 		   //if(Cc==0) {cliProcess((uint8_t*)&c); continue;}
 		   if((c!='\r')&&(c!='\n')&&(c!=';'))
-			 { if(p1==0)
-				 {  if((uint8_t)c<0x80)
-				 	  { //To UpCase
-							// if(((uint8_t)c>=0x61)&&((uint8_t)c<=0x7A)) c-=0x20;
-							 R[R_Ptr++]=c;
-						}
+		   { if(p1==0)
+			 { if((uint8_t)c<0x80)
+			   { //To UpCase
+				 // if(((uint8_t)c>=0x61)&&((uint8_t)c<=0x7A)) c-=0x20;
+				 R[R_Ptr++]=c;
+			   	}
 						else
 						{ p1=c;
 						}

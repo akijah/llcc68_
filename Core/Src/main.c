@@ -165,7 +165,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  CliTaskHandle = osThreadNew(StartCliTask, NULL, &CliTask_attributes);
+  //CliTaskHandle = osThreadNew(StartCliTask, NULL, &CliTask_attributes);
 
 
 
@@ -350,7 +350,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 36;
+  htim1.Init.Prescaler = 360;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 1000;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -454,7 +454,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LORA_INT_Pin */
@@ -494,6 +494,12 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
+
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -515,16 +521,10 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
 	printf("%s Ver.%s %s %s\n", T_USTR ,REV_NUM,REV_DATE, REV_TIME);
   for(;;)
-  {
-
-		 for(;;)
-		 { HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
-			printf("%04d\n",k);k++;
-		    osDelay(10000);
-		 }
-
-
-	  osDelay(1);
+  {   HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
+	 // OUT_TGL(LED1);
+	  //printf("%04d\n",k);k++;
+	  osDelay(1000);
   }
   /* USER CODE END 5 */
 }
