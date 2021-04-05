@@ -6,7 +6,7 @@
 #include "peripheral.h"
 #include "LoraDrv.h"
 #include "rev.h"
-const char *engkey[] = {"VER","BAUD","TIME","RESET",NULL};
+const char *engkey[] = {"VER","BAUD","TIME","RESET","HELP","OUT","ON","OFF",NULL};
 
 
 uint16_t Parser(char **Buf)
@@ -36,7 +36,7 @@ uint8_t CmdPerform(char *Buf)
 		uint16_t URes;
 	  //uint64_t Bb[MAX_SENS];  
 	
-		printf("Convert: %s\n",Buf);
+		//printf("Convert: %s\n",Buf);
 
 		StrPtr=strtok(Buf," \r");
   	    cmd=Parser(&StrPtr);
@@ -46,7 +46,10 @@ uint8_t CmdPerform(char *Buf)
 	switch (cmd)
 		{ 	case U(KEY_VER,KEY_NONE):
 
-					printf("%s Ver.%s %s %s\n", T_USTR ,REV_NUM,REV_DATE, REV_TIME);
+					//printf("%s Ver.%s %s %s\n", T_USTR ,REV_NUM,REV_DATE, REV_TIME);
+					printf("%s Ver.%s \n", T_USTR ,REV_NUM);
+
+
 					break;
 			 case U(KEY_BAUD,KEY_NONE):
 				 	if(StrPtr)	u1=atoi(StrPtr);
@@ -55,12 +58,28 @@ uint8_t CmdPerform(char *Buf)
 			 	    printf("Baudrate= %d\n",URes);
 					break;
 
-   		      case 	U(KEY_TIME,KEY_NONE):
+   		    case 	U(KEY_TIME,KEY_NONE):
 					printf("time is...\n");
 					break;
 			case 	U(KEY_RESET,KEY_NONE):
 					printf("reset device...\n");
+			 	 	NVIC_SystemReset();
 					break;
+			case 	U(KEY_HELP,KEY_NONE):
+					printf("help,ver,baud,\n");
+					break;
+			case 	U(KEY_OUT,KEY_ON):
+					if(StrPtr)	u1=atoi(StrPtr);
+					if((u1>0)&&(u1<=OUTn)) OUT_ON(u1-1);
+					break;
+			case 	U(KEY_OUT,KEY_OFF):
+					if(StrPtr)	u1=atoi(StrPtr);
+					if((u1>0)&&(u1<=OUTn)) OUT_OFF(u1-1);
+					break;
+
+
+
+
 		};	
 		return result;
 }

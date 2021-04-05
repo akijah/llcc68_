@@ -11,6 +11,10 @@ extern "C" {
 #define	KEY_BAUD		0x01
 #define	KEY_TIME		0x02
 #define KEY_RESET		0x03
+#define	KEY_HELP		0x04
+#define	KEY_OUT			0x05
+#define	KEY_ON			0x06
+#define	KEY_OFF			0x07
 
 #define KEY_NONE		0xFF
 
