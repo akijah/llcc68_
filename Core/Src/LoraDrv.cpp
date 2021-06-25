@@ -15,14 +15,9 @@ uint16_t SetBaud (uint16_t *val)
 	return Baudrate;
 }
 
-/*
-uint8_t isTX()
-{
-	GPIO_PinState s = HAL_GPIO_ReadPin(MODE_IN_GPIO_Port, MODE_IN_Pin);
-    if (s == GPIO_PIN_SET) return 1;
-    return 0;
-}
+//GETIN(MODE_MS)
 
+/*
 uint8_t SX1276_WriteSingle(uint8_t command, uint8_t value) 													{//WriteSingle
 
 HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);

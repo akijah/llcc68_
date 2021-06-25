@@ -69,12 +69,12 @@ uint8_t CmdPerform(char *Buf)
 					printf("help,ver,baud,\n");
 					break;
 			case 	U(KEY_OUT,KEY_ON):
-					if(StrPtr)	u1=atoi(StrPtr);
-					if((u1>0)&&(u1<=OUTn)) OUT_ON(u1-1);
+					//if(StrPtr)	u1=atoi(StrPtr);
+					//if((u1>0)&&(u1<=OUTn)) OUTON(u1-1);
 					break;
 			case 	U(KEY_OUT,KEY_OFF):
-					if(StrPtr)	u1=atoi(StrPtr);
-					if((u1>0)&&(u1<=OUTn)) OUT_OFF(u1-1);
+					//if(StrPtr)	u1=atoi(StrPtr);
+					//if((u1>0)&&(u1<=OUTn)) OUTOFF(u1-1);
 					break;
 
 

@@ -4,7 +4,7 @@
 #ifdef __cplusplus
  extern "C" {
 #endif 
-
+#include "main.h"
 #include "stm32f1xx_hal.h"
 #define T_USTR "E220 Module Test"
 
@@ -30,30 +30,19 @@
 #define LOG_SIM			0x02				
 #define dbg_printf(__msg, ...)	if(M2_STAT&LOG_ON)  printf(__msg, ##__VA_ARGS__)
 #define sim_printf(__msg, ...)	if(M2_STAT&LOG_SIM) printf(__msg, ##__VA_ARGS__)
-//#else /* DEBUG */
-//#define dbg_printf(__msg, ...)	do{}while(0)	
-//#endif /* DEBUG */	 
 
-#define OUTn	 5 
-#define INn 	 2
 
-typedef enum 
-{		LED1 =0, //
-		CS   =1,
-		RES  =2,
-		TXEN =3,
-		RXEN =4,
-} Out_TypeDef;
-//Buttons
-typedef enum 
-{
-	INT = 0,
-	MODE = 1,
-	BUT = 2,
-} In_TypeDef;
+#define GETIN(Name)  (HAL_GPIO_ReadPin(Name ## _GPIO_Port ,Name ## _Pin)==GPIO_PIN_SET)
+
+#define OUTON(Name) HAL_GPIO_WritePin(Name ## _GPIO_Port,Name ## _Pin,GPIO_PIN_SET)
+#define OUTOFF(Name) HAL_GPIO_WritePin(Name ## _GPIO_Port,Name ## _Pin,GPIO_PIN_RESET)
+#define OUTTGL(Name) HAL_GPIO_TogglePin(Name ## _GPIO_Port,Name ## _Pin)
+
+
+
 
 #define BS_ON     	0x01
-#define BS_CHG_ON		0x02
+#define BS_CHG_ON	0x02
 #define BS_CHG_LONG 0x04
 #define BS_CHG_OFF  0x08
 
@@ -77,16 +66,13 @@ typedef struct
 #define B_COUNTER_LONG  30
 //----------------------------------------------------------------------------------
 
-#define MAX_RXCYCL_BUF	1000 //Циклический  буфер для UART1 UART2 
+#define MAX_RXCYCL_BUF	1024 //Циклический  буфер для UART1 UART2
 #define TEST(X,Y) ((X==Y)||(X==Y+1))
 
 uint8_t FindName(char *S);
 uint8_t IsValue(char *S);
-uint8_t GetIn(In_TypeDef inn);
-uint8_t GetOutState(Out_TypeDef outn);
-void OUT_ON(Out_TypeDef outn);
-void OUT_OFF(Out_TypeDef outn);
-void OUT_TGL(Out_TypeDef outn);
+
+//uint8_t GetOutState(Out_TypeDef outn);
 //void Delay_us(uint16_t uSecs);
 //void Delay_ms(uint16_t mSecs);
 uint8_t KeyFind(char *S,const char **key);

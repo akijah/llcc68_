@@ -19,6 +19,8 @@ extern "C" {
 //Add to stm32f1xx_hal_dma.h
 
 
+int cnt;
+
 static uint8_t RXBuf1[MAX_RXCYCL_BUF];
 static uint8_t const *rx1_tail_ptr;
 extern UART_HandleTypeDef huart1;
@@ -242,6 +244,29 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 */
 //------------------------------------------------------------------------
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin==GPIO_PIN_6)
+	{
+		printf("TransmitInterupt %d\n",cnt);
+		cnt++;
+		OUTON(LED);
+		//llcc68_set_buffer_base_address(&llcc68, 0, 128);
+		//Transmit();
+		HAL_Delay(2000);
+
+	}
+	if(GPIO_Pin==GPIO_PIN_7)
+	{  printf("RcvInterupt\n");
+		OUTOFF(LED);
+		HAL_Delay(2000);
+	}
+
+}
+
+
+
 
 
 #ifdef __cplusplus

@@ -60,19 +60,28 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define LED_Pin GPIO_PIN_13
 #define LED_GPIO_Port GPIOC
-#define LORA_INT_Pin GPIO_PIN_1
-#define LORA_INT_GPIO_Port GPIOA
-#define LORA_INT_EXTI_IRQn EXTI1_IRQn
-#define SPI1_CS_Pin GPIO_PIN_4
-#define SPI1_CS_GPIO_Port GPIOA
-#define RFM_RESET_Pin GPIO_PIN_0
-#define RFM_RESET_GPIO_Port GPIOB
-#define MODE_IN_Pin GPIO_PIN_1
-#define MODE_IN_GPIO_Port GPIOB
-#define TXEN_Pin GPIO_PIN_10
-#define TXEN_GPIO_Port GPIOB
-#define RXEN_Pin GPIO_PIN_11
+#define SPI1_NSS_Pin GPIO_PIN_4
+#define SPI1_NSS_GPIO_Port GPIOA
+#define NRST_Pin GPIO_PIN_0
+#define NRST_GPIO_Port GPIOB
+#define BUSY_Pin GPIO_PIN_1
+#define BUSY_GPIO_Port GPIOB
+#define DIO1_Pin GPIO_PIN_10
+#define DIO1_GPIO_Port GPIOB
+#define MODE_MS_Pin GPIO_PIN_12
+#define MODE_MS_GPIO_Port GPIOB
+#define RXEN_Pin GPIO_PIN_3
 #define RXEN_GPIO_Port GPIOB
+#define TXEN_Pin GPIO_PIN_4
+#define TXEN_GPIO_Port GPIOB
+#define DIO2_Pin GPIO_PIN_5
+#define DIO2_GPIO_Port GPIOB
+#define EXT6_BTN_Pin GPIO_PIN_6
+#define EXT6_BTN_GPIO_Port GPIOB
+#define EXT6_BTN_EXTI_IRQn EXTI9_5_IRQn
+#define EXT7_DIO1_Pin GPIO_PIN_7
+#define EXT7_DIO1_GPIO_Port GPIOB
+#define EXT7_DIO1_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

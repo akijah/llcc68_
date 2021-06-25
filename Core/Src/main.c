@@ -445,10 +445,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(SPI1_NSS_GPIO_Port, SPI1_NSS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, RFM_RESET_Pin|TXEN_Pin|RXEN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, NRST_Pin|RXEN_Pin|TXEN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;
@@ -457,42 +457,48 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LORA_INT_Pin */
-  GPIO_InitStruct.Pin = LORA_INT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(LORA_INT_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : SPI1_CS_Pin */
-  GPIO_InitStruct.Pin = SPI1_CS_Pin;
+  /*Configure GPIO pin : SPI1_NSS_Pin */
+  GPIO_InitStruct.Pin = SPI1_NSS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(SPI1_CS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(SPI1_NSS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : RFM_RESET_Pin */
-  GPIO_InitStruct.Pin = RFM_RESET_Pin;
+  /*Configure GPIO pin : NRST_Pin */
+  GPIO_InitStruct.Pin = NRST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(RFM_RESET_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(NRST_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : MODE_IN_Pin */
-  GPIO_InitStruct.Pin = MODE_IN_Pin;
+  /*Configure GPIO pin : BUSY_Pin */
+  GPIO_InitStruct.Pin = BUSY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(MODE_IN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(BUSY_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TXEN_Pin RXEN_Pin */
-  GPIO_InitStruct.Pin = TXEN_Pin|RXEN_Pin;
+  /*Configure GPIO pins : DIO1_Pin MODE_MS_Pin DIO2_Pin */
+  GPIO_InitStruct.Pin = DIO1_Pin|MODE_MS_Pin|DIO2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : RXEN_Pin TXEN_Pin */
+  GPIO_InitStruct.Pin = RXEN_Pin|TXEN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : EXT6_BTN_Pin EXT7_DIO1_Pin */
+  GPIO_InitStruct.Pin = EXT6_BTN_Pin|EXT7_DIO1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 
@@ -515,8 +521,8 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
 	printf("%s Ver.%s %s %s\n", T_USTR ,REV_NUM,REV_DATE, REV_TIME);
   for(;;)
-  {   HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
-	 // OUT_TGL(LED1);
+  {   //HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
+	  OUTTGL(LED);
 	  //printf("%04d\n",k);k++;
 	  osDelay(1000);
   }

@@ -24,18 +24,6 @@ PUTCHAR_PROTOTYPE
 //----------------------------------------------------------------
 
 
-
-const uint16_t  OUT_PIN[OUTn]  = {	GPIO_PIN_13,	GPIO_PIN_4,	GPIO_PIN_0,	GPIO_PIN_10, GPIO_PIN_11};
-GPIO_TypeDef*   OUT_PORT[OUTn] = {	GPIOC,		 	GPIOA,		GPIOB,		GPIOB, 		 GPIOB};
-
-
-
-const uint16_t  IN_PIN[INn]  = {	GPIO_PIN_1,		GPIO_PIN_1};
-GPIO_TypeDef*   IN_PORT[INn] = {	GPIOA,			GPIOB};
-
-
-//===============================================================================================
-
 void ConvertUp(uint8_t *B,uint8_t len)
 { uint8_t i;
 	for(i=0;i<len;i++)
@@ -80,46 +68,10 @@ uint8_t KeyFind(char *S,const char **key)
 }
 //---------------------------------------------------------------------------------------------------
 
-
-
-uint8_t GetIn(In_TypeDef inn)
-{
-   if(HAL_GPIO_ReadPin(IN_PORT[inn],IN_PIN[inn])==GPIO_PIN_SET) return IO_SET;
-	 else return IO_RESET;
-}
-//-----------------------------------------------------------------------------------																
-
+/*
 uint8_t GetOutState(Out_TypeDef outn)
 {  assert_param(IS_GPIO_PIN(OUT_PIN[outn])); 
   if ((OUT_PORT[outn]->ODR & OUT_PIN[outn]) != (uint32_t)GPIO_PIN_RESET) return IO_SET;
 	else   return IO_RESET;
-}
+}*/
 //-----------------------------------------------------------------------------------
-void OUT_ON(Out_TypeDef outn)
-{ HAL_GPIO_WritePin(OUT_PORT[outn],OUT_PIN[outn],GPIO_PIN_SET);
-	//if(outn<MAX_OUTPUT) 
-	//{	 if(!(storeouts&(1<<outn))) dbg_printf("Out%1d on [prev %02X]\n",outn+1,storeouts);
-	//		storeouts|=(1<<outn);
-	//}	
-}
-//------------------------------------------------------------------------------------
-void OUT_OFF(Out_TypeDef outn)
-{ HAL_GPIO_WritePin(OUT_PORT[outn],OUT_PIN[outn], GPIO_PIN_RESET);
-	//if(outn<MAX_OUTPUT) 
-	//{  
-	//	 if(storeouts&(1<<outn)) dbg_printf("Out%1d off[prev %02X]\n",outn+1,storeouts);
-	//	 storeouts&=~(1<<outn);
-	//}	
-}
-//--------------------------------------------------------------------------------------	
-void OUT_TGL(Out_TypeDef outn)
-{ HAL_GPIO_TogglePin(OUT_PORT[outn],OUT_PIN[outn]);
-	//if(outn<MAX_OUTPUT) 
-	//{	if(storeouts&(1<<outn)){ dbg_printf("Out%1d off[prev %02X]\n",outn+1,storeouts);}
-	//	else										{dbg_printf("Out%1d on[prev %02X]\n",outn+1,storeouts);};
-	//	storeouts^=(1<<outn);
-	
-}
-//----------------------------------------------------------------------------------------
-
-
