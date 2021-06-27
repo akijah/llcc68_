@@ -4,10 +4,10 @@
 #include "stdio.h"
 #include "string.h"
 
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 #include "peripheral.h"
 #include "parse.h"
-
+#include "LoraDrv.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,14 +17,11 @@ extern "C" {
 
 
 //Add to stm32f1xx_hal_dma.h
-
-
-int cnt;
-
+extern osEventFlagsId_t evt_id;
 static uint8_t RXBuf1[MAX_RXCYCL_BUF];
 static uint8_t const *rx1_tail_ptr;
 extern UART_HandleTypeDef huart1;
-
+extern osThreadId_t LoraTaskHandle;
 
 //UART1 Cyclic Buf------------------------------------------------------------------------------------------
 static char GetRX1Buf(void)
@@ -101,30 +98,8 @@ void StartCliTask(void const * argument)
 		 }
 		 osDelay(100);
 	 }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//----------------------------------------------------------------------------------------------------------------------
 /*void maincpp()
 {
 	HAL_UART_Receive_IT(&huart1, &uart1rxbyte, 1);
@@ -246,21 +221,31 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 //------------------------------------------------------------------------
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
+{	int32_t fl1,fl2,fl3;
+	//osThreadId_t LoraTaskHandle;
 	if(GPIO_Pin==GPIO_PIN_6)
 	{
-		printf("TransmitInterupt %d\n",cnt);
-		cnt++;
-		OUTON(LED);
+
+		//fl=osSignalSet(LoraTaskHandle, 111);
+		 fl1=osEventFlagsSet (evt_id, 0x0001U);
+		printf("EXT6 %d\n",fl1);
 		//llcc68_set_buffer_base_address(&llcc68, 0, 128);
 		//Transmit();
-		HAL_Delay(2000);
+		//osDelay(1000);
 
 	}
 	if(GPIO_Pin==GPIO_PIN_7)
-	{  printf("RcvInterupt\n");
-		OUTOFF(LED);
-		HAL_Delay(2000);
+	{
+		//fl1= osEventFlagsGet	(evt_id);
+
+
+		fl1=osEventFlagsSet (evt_id, 0x0002U);
+		//fl3= osEventFlagsGet	(evt_id);
+		//fl=osSignalSet(LoraTaskHandle, 112);
+		printf("EXT7 %d\n",fl1);
+
+
+		//osDelay(1000);
 	}
 
 }

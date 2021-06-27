@@ -9,7 +9,8 @@ extern "C" {
 
 
 uint16_t SetBaud (uint16_t *val);
-
+void StartLoraTask(void const * argument);
+int Init_Events ( void );
 #ifdef __cplusplus
 }
 #endif

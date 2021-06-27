@@ -25,14 +25,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "maincpp.h"
 #include "peripheral.h"
 #include "rev.h"
-
+#include "LoraDrv.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,6 +75,14 @@ const osThreadAttr_t CliTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
+osThreadId_t LoraTaskHandle;
+const osThreadAttr_t LoraTask_attributes = {
+  .name = "LoraTask",
+  .stack_size = 512,//128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -114,7 +122,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+      HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -167,6 +175,7 @@ int main(void)
   /* add threads, ... */
   CliTaskHandle = osThreadNew(StartCliTask, NULL, &CliTask_attributes);
 
+  LoraTaskHandle = osThreadNew(StartLoraTask, NULL, &LoraTask_attributes);
 
 
 
@@ -174,6 +183,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
+  Init_Events ( );
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */

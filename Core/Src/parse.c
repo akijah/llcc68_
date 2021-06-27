@@ -5,7 +5,9 @@
 #include "base.h"
 #include "peripheral.h"
 #include "LoraDrv.h"
+#include "cmsis_os2.h"
 #include "rev.h"
+extern osEventFlagsId_t evt_id;
 const char *engkey[] = {"VER","BAUD","TIME","RESET","HELP","OUT","ON","OFF",NULL};
 
 
@@ -34,6 +36,7 @@ uint8_t CmdPerform(char *Buf)
 	 // char S[50], B[20];//,B[20];
 		uint8_t u1;
 		uint16_t URes;
+		uint32_t fl1;
 	  //uint64_t Bb[MAX_SENS];  
 	
 		//printf("Convert: %s\n",Buf);
@@ -54,7 +57,7 @@ uint8_t CmdPerform(char *Buf)
 			 case U(KEY_BAUD,KEY_NONE):
 				 	if(StrPtr)	u1=atoi(StrPtr);
 				 	else u1=0;
-					URes=SetBaud((u1>0)?(&u1):NULL);
+					//URes=SetBaud((u1>0)?(&u1):NULL);
 			 	    printf("Baudrate= %d\n",URes);
 					break;
 
@@ -69,10 +72,12 @@ uint8_t CmdPerform(char *Buf)
 					printf("help,ver,baud,\n");
 					break;
 			case 	U(KEY_OUT,KEY_ON):
+					fl1=osEventFlagsSet (evt_id, 0x0004U);
 					//if(StrPtr)	u1=atoi(StrPtr);
 					//if((u1>0)&&(u1<=OUTn)) OUTON(u1-1);
 					break;
 			case 	U(KEY_OUT,KEY_OFF):
+					fl1=osEventFlagsSet (evt_id, 0x0008U);
 					//if(StrPtr)	u1=atoi(StrPtr);
 					//if((u1>0)&&(u1<=OUTn)) OUTOFF(u1-1);
 					break;
