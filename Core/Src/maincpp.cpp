@@ -228,7 +228,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 		//fl=osSignalSet(LoraTaskHandle, 111);
 		 fl1=osEventFlagsSet (evt_id, 0x0001U);
-		printf("EXT6 %d\n",fl1);
+
+
+		// printf("EXT6 %d\n",fl1);
 		//llcc68_set_buffer_base_address(&llcc68, 0, 128);
 		//Transmit();
 		//osDelay(1000);
@@ -242,7 +244,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		fl1=osEventFlagsSet (evt_id, 0x0002U);
 		//fl3= osEventFlagsGet	(evt_id);
 		//fl=osSignalSet(LoraTaskHandle, 112);
-		printf("EXT7 %d\n",fl1);
+		//printf("EXT7 %d\n",fl1);
 
 
 		//osDelay(1000);

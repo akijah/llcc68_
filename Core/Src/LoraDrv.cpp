@@ -20,12 +20,14 @@ LLCC68_Context_t llcc68;
 llcc68_irq_mask_t irq_status;
 llcc68_mod_params_lora_t params;
 llcc68_chip_status_t radio_status;
-
+llcc68_rx_buffer_status_t rx_buffer_status;
+llcc68_pkt_status_lora_t pkt_status;
 bool isTX;
 osEventFlagsId_t evt_id;                        // идентификатор очереди сообщений
 
 static void Lora_Init(void);
-
+static void Transmit(void);
+static void Receive(void);
 
 int Init_Events ( void )
 {
@@ -52,14 +54,16 @@ void StartLoraTask(void const * argument)
 	printf("Start Lora module in %s mode\n",isTX?"Tx":"Rx");
 	for(;;)
 	{
+	  if(isTX)
+	  {	flags=osEventFlagsWait(evt_id,0x000FU,osFlagsWaitAny|osFlagsNoClear,osWaitForever); //osFlagsWaitAny,osFlagsWaitAll,osFlagsNoClear
+ 		 printf("flags %08x \n",flags);
 
-		//ev=osSignalWait (111, 15000);
-		flags=osEventFlagsWait(evt_id,0x0007U,osFlagsWaitAny,osWaitForever); //osFlagsWaitAny,osFlagsWaitAll,osFlagsNoClear
-
-		printf("flags %08x \n",flags);
+		Transmit();
 		osDelay(1000);
-
-
+		osEventFlagsClear (evt_id,0x000FU);
+	  }
+	  else Receive();
+	  osDelay(100);
 
 	}
 
@@ -257,15 +261,88 @@ void GoStandby()
 	 // SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_STANDBY|0x80);
 }
 */
-void Transmit(uint8_t* data, size_t len)
+/*void Transmit(uint8_t* data, size_t len)
 {
-/*	  SX1276_WriteSingle(REG_LR_DIOMAPPING1,	RFLR_DIOMAPPING1_DIO0_01);
+	  SX1276_WriteSingle(REG_LR_DIOMAPPING1,	RFLR_DIOMAPPING1_DIO0_01);
 	  SX1276_WriteSingle(REG_LR_SYNCWORD,0x12);
 	  SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_STANDBY|0x80);
 	  SX1276_WriteSingle(REG_LR_FIFOADDRPTR,0x80);
 	  SX1276_WriteBurst( REG_LR_FIFO, data, len);
-	  SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_TRANSMITTER|0x80);*/
+	  SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_TRANSMITTER|0x80);
+}*/
+
+
+void Transmit(void)
+{
+	        tx_buf[0] = cnt;
+			llcc68_write_buffer(&llcc68, 0, tx_buf, 16);
+			OUTON(LED);
+			OUTON(TXEN);
+			llcc68_set_tx(&llcc68, 1000);
+
+			while (1)
+			{
+				llcc68_get_status(&llcc68, &radio_status);
+				llcc68_get_irq_status(&llcc68, &irq_status);
+				if (irq_status != 0)	break;
+				osDelay(100);
+			}
+
+			if (irq_status)
+			{
+				llcc68_clear_irq_status(&llcc68, irq_status);
+			}
+
+			llcc68_get_status(&llcc68, &radio_status);
+
+			OUTOFF(LED);
+			OUTOFF(TXEN);
 }
+
+//---------------------------------------------------------------------------------------------------
+void Receive(void)
+{			llcc68_get_irq_status(&llcc68, &irq_status);
+			llcc68_get_status(&llcc68, &radio_status);
+
+			OUTON(RXEN);
+			llcc68_clear_irq_status(&llcc68, llcc68_irq_masks_e::LLCC68_IRQ_ALL);
+			llcc68_get_irq_status(&llcc68, &irq_status);
+			llcc68_clear_irq_status(&llcc68, llcc68_irq_masks_e::LLCC68_IRQ_RX_DONE);
+			llcc68_get_irq_status(&llcc68, &irq_status);
+			llcc68_set_rx(&llcc68, 1000);
+
+			while (1)
+			{
+				llcc68_get_status(&llcc68, &radio_status);
+				llcc68_get_irq_status(&llcc68, &irq_status);
+				if (irq_status & (llcc68_irq_masks_e::LLCC68_IRQ_TIMEOUT))	break;
+				if (irq_status & (llcc68_irq_masks_e::LLCC68_IRQ_RX_DONE))	break;
+				if (radio_status.chip_mode != LLCC68_CHIP_MODE_RX) break;
+				//if (radio_status.chip_mode);
+				osDelay(100);
+				cnt++;
+			}
+
+			if (irq_status & (llcc68_irq_masks_e::LLCC68_IRQ_RX_DONE))
+			{
+
+				OUTON(LED);
+
+				llcc68_clear_irq_status(&llcc68, irq_status);
+
+				llcc68_get_rx_buffer_status(&llcc68, &rx_buffer_status);
+
+				llcc68_get_lora_pkt_status(&llcc68, &pkt_status);
+				llcc68_read_buffer(&llcc68, 128, rx_buf, 16);
+				printf("cnt = %d rssi=%d dBm SRSSI=%d dBm SNR=%d dB\n",rx_buf[0],
+						pkt_status.rssi_pkt_in_dbm,pkt_status.signal_rssi_pkt_in_dbm,pkt_status.snr_pkt_in_db);
+				osDelay(10);
+				OUTOFF(LED);
+			}
+			llcc68_get_status(&llcc68, &radio_status);
+			OUTOFF(RXEN);
+}
+
 
 void GoReceive()
 {
@@ -276,15 +353,15 @@ void GoReceive()
 	  SX1276_WriteSingle(REG_LR_OPMODE,RFLR_OPMODE_RECEIVER|0x80);*/
 }
 
-int Receive()
+/*int Receive()
 {
-  /*	rx_bytes = SX1276_ReadSingle(REG_LR_RXNBBYTES);
+  	rx_bytes = SX1276_ReadSingle(REG_LR_RXNBBYTES);
   	rssi = SX1276_ReadSingle(REG_LR_PKTRSSIVALUE);
   	rssi = rssi;
   	snr= SX1276_ReadSingle(REG_LR_PKTSNRVALUE);
   	snr = snr;
   	SX1276_ReadBurst( REG_LR_FIFO, RX_BUF, rx_bytes);
-  	return rx_bytes;*/
-}
+  	return rx_bytes;
+}*/
 
 

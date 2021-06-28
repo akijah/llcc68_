@@ -25,7 +25,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os2.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -122,7 +122,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-      HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -481,29 +481,23 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(NRST_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BUSY_Pin */
-  GPIO_InitStruct.Pin = BUSY_Pin;
+  /*Configure GPIO pins : BUSY_Pin DIO1_Pin MODE_MS_Pin DIO2_Pin */
+  GPIO_InitStruct.Pin = BUSY_Pin|DIO1_Pin|MODE_MS_Pin|DIO2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(BUSY_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : DIO1_Pin MODE_MS_Pin DIO2_Pin */
-  GPIO_InitStruct.Pin = DIO1_Pin|MODE_MS_Pin|DIO2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : RXEN_Pin TXEN_Pin */
   GPIO_InitStruct.Pin = RXEN_Pin|TXEN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : EXT6_BTN_Pin EXT7_DIO1_Pin */
   GPIO_InitStruct.Pin = EXT6_BTN_Pin|EXT7_DIO1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
