@@ -18,7 +18,7 @@ uint8_t  tx_buf[16],rx_buf[16] ;
 int cnt;
 LLCC68_Context_t llcc68;
 llcc68_irq_mask_t irq_status;
-llcc68_mod_params_lora_t params;
+//llcc68_mod_params_lora_t params;
 llcc68_chip_status_t radio_status;
 llcc68_rx_buffer_status_t rx_buffer_status;
 llcc68_pkt_status_lora_t pkt_status;
@@ -73,7 +73,12 @@ void StartLoraTask(void const * argument)
 //------------------------------------------------------------------------------------------------------------
 void Lora_Init(void)
 {
-	     llcc68.hspi = &hspi1;
+	    llcc68_pa_cfg_params_t pa_params;
+	    llcc68_mod_params_lora_t mod_params;
+	    llcc68_pkt_params_lora_t pkt_params;
+	    uint32_t air_num,air_ms;
+
+	    llcc68.hspi = &hspi1;
 		llcc68.BUSY = BUSY_Pin;
 		llcc68.NRST = NRST_Pin;
 		llcc68.NSS = SPI1_NSS_Pin;
@@ -86,51 +91,61 @@ void Lora_Init(void)
 		llcc68_hal_wakeup(&llcc68);
 
 		llcc68_set_standby(&llcc68, llcc68_standby_cfgs_e::LLCC68_STANDBY_CFG_XOSC);
-		llcc68_set_pkt_type(&llcc68, llcc68_pkt_types_e::LLCC68_PKT_TYPE_LORA);
-		llcc68_set_rf_freq(&llcc68, 868000000L);
-		{
-			llcc68_pa_cfg_params_t params;
-			params.device_sel = 0;
-	//		params.hp_max = 2;          // output power
-	//		params.pa_duty_cycle = 2;   // is +14 dBm
-			params.hp_max = 7;          // output power
-			params.pa_duty_cycle = 4;   // is +22 dBm
-			params.pa_lut = 1;
-			llcc68_set_pa_cfg(&llcc68, &params);
-		}
-		{
-			llcc68_set_tx_params(&llcc68, 14, llcc68_ramp_time_e::LLCC68_RAMP_3400_US);
-		}
-		{
 
-			params.bw = llcc68_lora_bw_e::LLCC68_LORA_BW_125;
-			params.sf = llcc68_lora_sf_e::LLCC68_LORA_SF5;
-			params.cr = llcc68_lora_cr_e::LLCC68_LORA_CR_4_5;
-			params.ldro = 0;
-			llcc68_set_lora_mod_params(&llcc68, &params);
-		}
-		llcc68_get_irq_status(&llcc68, &irq_status);
-		{
-			llcc68_pkt_params_lora_t params;
-			params.crc_is_on = true;
-			params.invert_iq_is_on = false;
-			params.preamble_len_in_symb = 100;
-			params.header_type = llcc68_lora_pkt_len_modes_e::LLCC68_LORA_PKT_EXPLICIT;
-			params.pld_len_in_bytes = 16;
-			llcc68_set_lora_pkt_params(&llcc68, &params);
-		}
-		llcc68_get_irq_status(&llcc68, &irq_status);
+		llcc68_set_pkt_type(&llcc68, llcc68_pkt_types_e::LLCC68_PKT_TYPE_LORA);
+
+		llcc68_set_rf_freq(&llcc68, 868000000L);
+
+
+
+	   	pa_params.hp_max = 2;          // output power
+	   	pa_params.pa_duty_cycle = 2;   // is +14 dBm
+		//	pa_params.hp_max = 3;          // output power
+		//	pa_params.pa_duty_cycle = 2;   // is +17 dBm
+		//	pa_params.hp_max = 5;          // output power
+		//	pa_params.pa_duty_cycle = 3;   // is +20 dBm
+		//pa_params.hp_max = 7;          	   // output power
+		//pa_params.pa_duty_cycle = 4;       // is +22 dBm
+		pa_params.device_sel = 0;
+		pa_params.pa_lut = 1;
+		pa_llcc68_set_pa_cfg(&llcc68, &pa_params);
+
+		//Мощность TX
+		llcc68_set_tx_params(&llcc68, 14, llcc68_ramp_time_e::LLCC68_RAMP_3400_US);
+
+		mod_params.bw = llcc68_lora_bw_e::LLCC68_LORA_BW_125;
+		mod_params.sf = llcc68_lora_sf_e::LLCC68_LORA_SF5;
+		mod_params.cr = llcc68_lora_cr_e::LLCC68_LORA_CR_4_5;
+		mod_params.ldro = 0;
+		llcc68_set_lora_mod_params(&llcc68, &mod_params);
+
+		//llcc68_get_irq_status(&llcc68, &irq_status);
+		pkt_params.crc_is_on = true;
+		pkt_params.invert_iq_is_on = false;
+		pkt_params.preamble_len_in_symb = 100;
+		pkt_params.header_type = llcc68_lora_pkt_len_modes_e::LLCC68_LORA_PKT_EXPLICIT;
+		pkt_params.pld_len_in_bytes = 16;
+		llcc68_set_lora_pkt_params(&llcc68, &pkt_params);
+
+		air_num=llcc68_get_lora_time_on_air_numerator( &pkt_params,&mod_params);
+		air_ms=llcc68_get_lora_time_on_air_in_ms( &pkt_params,&mod_params);
+		printf("On air = %d ms [%d]\n",air_ms,air_num);
+		//llcc68_get_irq_status(&llcc68, &irq_status);
 
 		int irq_mask = llcc68_irq_masks_e::LLCC68_IRQ_ALL;
-
 		llcc68_get_irq_status(&llcc68, &irq_status);
-		llcc68_set_dio_irq_params(&llcc68, irq_mask, 0, 0, 0);
+
+		llcc68_set_dio_irq_params(&llcc68, irq_mask, irq_mask, 0, 0);
+
 		llcc68_get_irq_status(&llcc68, &irq_status);
 
 
 		llcc68_get_status(&llcc68, &radio_status);
 		llcc68_get_irq_status(&llcc68, &irq_status);
 
+		//adr0x741 0x3444 for Public Network
+		//0x1424 for Private Network
+		llcc68_set_lora_sync_word( &llcc68, 0x12); //0x34
 
 		 llcc68_set_dio2_as_rf_sw_ctrl(&llcc68, true );
 		cnt = 0;
