@@ -73,6 +73,9 @@ TX		llcc68_set_tx(&llcc68, timeout);
 		llcc68_set_tx_params(&llcc68, 14, llcc68_ramp_time_e::LLCC68_RAMP_3400_US); -9-+22 dBm
 		RampTime- 10,20,40,80,200,800,1700,3400
 
+		125 SF=5,6,7,8,9
+		250 SF=5,6,7,8,9,10
+		500 SF=5,6,7,8,9,10,11
 		params.bw = llcc68_lora_bw_e::LLCC68_LORA_BW_125;
 		params.sf = llcc68_lora_sf_e::LLCC68_LORA_SF5;
 		params.cr = llcc68_lora_cr_e::LLCC68_LORA_CR_4_5;
@@ -180,8 +183,21 @@ llcc68_get_status(&llcc68, &radio_status);
 
  */
 
-uint16_t SetBaud (uint16_t *val);
-void StartLoraTask(void const * argument);
+enum event_sig
+{
+    EV_NONE 	= 0x0000U,
+	EV_PUSHBUT1 = 0x0001U,
+	EV_PUSHBUT2 = 0x0002U,
+	EV_LLCC68	= 0x0004U,
+	EV_TEST1	= 0x0008U,
+	EV_TEST2	= 0x0010U,
+	EV_ALL		= 0x001FU
+};
+
+
+
+
+void StartLoraTask(void *argument);
 int Init_Events ( void );
 #ifdef __cplusplus
 }

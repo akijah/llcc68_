@@ -45,7 +45,7 @@ int Init_Events ( void )
 
 
 
-void StartLoraTask(void const * argument)
+void StartLoraTask(void *argument)
 {	uint32_t flags;
 	Lora_Init();
 
@@ -55,12 +55,27 @@ void StartLoraTask(void const * argument)
 	for(;;)
 	{
 	  if(isTX)
-	  {	flags=osEventFlagsWait(evt_id,0x000FU,osFlagsWaitAny|osFlagsNoClear,osWaitForever); //osFlagsWaitAny,osFlagsWaitAll,osFlagsNoClear
- 		 printf("flags %08x \n",flags);
+	  {	flags=osEventFlagsWait(evt_id,EV_ALL,osFlagsWaitAny|osFlagsNoClear,osWaitForever); //osFlagsWaitAny,osFlagsWaitAll,osFlagsNoClear
+ 		 printf("flags %08lx \n",flags);
 
-		Transmit();
-		osDelay(1000);
-		osEventFlagsClear (evt_id,0x000FU);
+		if(flags&EV_PUSHBUT1)
+ 		{ Transmit();
+ 		  OUTON(LED);
+ 		  OUTON(TEST1);
+		 // osDelay(1000);
+ 		}
+
+		if(flags&EV_LLCC68)
+		{	llcc68_get_status(&llcc68, &radio_status);
+		    llcc68_get_irq_status(&llcc68, &irq_status);
+		    OUTOFF(LED);
+		    OUTOFF(TEST1);
+
+		}
+
+
+
+		osEventFlagsClear (evt_id,EV_ALL);
 	  }
 	  else Receive();
 	  osDelay(100);
@@ -96,7 +111,7 @@ void Lora_Init(void)
 
 		llcc68_set_rf_freq(&llcc68, 868000000L);
 
-
+		llcc68_cal_img(&llcc68 ,  868000000L);
 
 	   	pa_params.hp_max = 2;          // output power
 	   	pa_params.pa_duty_cycle = 2;   // is +14 dBm
@@ -108,14 +123,14 @@ void Lora_Init(void)
 		//pa_params.pa_duty_cycle = 4;       // is +22 dBm
 		pa_params.device_sel = 0;
 		pa_params.pa_lut = 1;
-		pa_llcc68_set_pa_cfg(&llcc68, &pa_params);
+		llcc68_set_pa_cfg(&llcc68, &pa_params);
 
 		//Мощность TX
 		llcc68_set_tx_params(&llcc68, 14, llcc68_ramp_time_e::LLCC68_RAMP_3400_US);
 
 		mod_params.bw = llcc68_lora_bw_e::LLCC68_LORA_BW_125;
-		mod_params.sf = llcc68_lora_sf_e::LLCC68_LORA_SF5;
-		mod_params.cr = llcc68_lora_cr_e::LLCC68_LORA_CR_4_5;
+		mod_params.sf = llcc68_lora_sf_e::LLCC68_LORA_SF9;//5
+		mod_params.cr = llcc68_lora_cr_e::LLCC68_LORA_CR_4_8;
 		mod_params.ldro = 0;
 		llcc68_set_lora_mod_params(&llcc68, &mod_params);
 
@@ -129,19 +144,19 @@ void Lora_Init(void)
 
 		air_num=llcc68_get_lora_time_on_air_numerator( &pkt_params,&mod_params);
 		air_ms=llcc68_get_lora_time_on_air_in_ms( &pkt_params,&mod_params);
-		printf("On air = %d ms [%d]\n",air_ms,air_num);
+		printf("On air = %ld ms [%ld]\n",air_ms,air_num);
 		//llcc68_get_irq_status(&llcc68, &irq_status);
 
 		int irq_mask = llcc68_irq_masks_e::LLCC68_IRQ_ALL;
-		llcc68_get_irq_status(&llcc68, &irq_status);
+		//llcc68_get_irq_status(&llcc68, &irq_status);
 
 		llcc68_set_dio_irq_params(&llcc68, irq_mask, irq_mask, 0, 0);
 
-		llcc68_get_irq_status(&llcc68, &irq_status);
+		//llcc68_get_irq_status(&llcc68, &irq_status);
 
 
-		llcc68_get_status(&llcc68, &radio_status);
-		llcc68_get_irq_status(&llcc68, &irq_status);
+		//llcc68_get_status(&llcc68, &radio_status);
+		//llcc68_get_irq_status(&llcc68, &irq_status);
 
 		//adr0x741 0x3444 for Public Network
 		//0x1424 for Private Network
@@ -291,7 +306,7 @@ void Transmit(void)
 {
 	        tx_buf[0] = cnt;
 			llcc68_write_buffer(&llcc68, 0, tx_buf, 16);
-			OUTON(LED);
+			//OUTON(LED);
 			OUTON(TXEN);
 			llcc68_set_tx(&llcc68, 1000);
 
@@ -310,7 +325,7 @@ void Transmit(void)
 
 			llcc68_get_status(&llcc68, &radio_status);
 
-			OUTOFF(LED);
+			//OUTOFF(LED);
 			OUTOFF(TXEN);
 }
 
@@ -341,7 +356,7 @@ void Receive(void)
 			if (irq_status & (llcc68_irq_masks_e::LLCC68_IRQ_RX_DONE))
 			{
 
-				OUTON(LED);
+				//OUTON(LED);
 
 				llcc68_clear_irq_status(&llcc68, irq_status);
 
@@ -352,7 +367,7 @@ void Receive(void)
 				printf("cnt = %d rssi=%d dBm SRSSI=%d dBm SNR=%d dB\n",rx_buf[0],
 						pkt_status.rssi_pkt_in_dbm,pkt_status.signal_rssi_pkt_in_dbm,pkt_status.snr_pkt_in_db);
 				osDelay(10);
-				OUTOFF(LED);
+				//OUTOFF(LED);
 			}
 			llcc68_get_status(&llcc68, &radio_status);
 			OUTOFF(RXEN);

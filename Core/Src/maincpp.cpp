@@ -47,7 +47,7 @@ static void ClrRX1Buf(void)
 
 
 
-void StartCliTask(void const * argument)
+void StartCliTask(void *argument)
 {
    char c;
    static char p1;
@@ -221,13 +221,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 //------------------------------------------------------------------------
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{	int32_t fl1,fl2,fl3;
+{	//int32_t fl1,fl2,fl3;
 	//osThreadId_t LoraTaskHandle;
 	if(GPIO_Pin==GPIO_PIN_6)
-	{
-
-		//fl=osSignalSet(LoraTaskHandle, 111);
-		 fl1=osEventFlagsSet (evt_id, 0x0001U);
+	{	 osEventFlagsSet (evt_id, EV_PUSHBUT1);
 
 
 		// printf("EXT6 %d\n",fl1);
@@ -241,7 +238,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		//fl1= osEventFlagsGet	(evt_id);
 
 
-		fl1=osEventFlagsSet (evt_id, 0x0002U);
+		osEventFlagsSet (evt_id, EV_LLCC68);
 		//fl3= osEventFlagsGet	(evt_id);
 		//fl=osSignalSet(LoraTaskHandle, 112);
 		//printf("EXT7 %d\n",fl1);

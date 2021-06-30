@@ -26,7 +26,7 @@ UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_tx;
 
 
-void StartCliTask(void const * argument);
+void StartCliTask(void *argument);
 
 
 //void maincpp();

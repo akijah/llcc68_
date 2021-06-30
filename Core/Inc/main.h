@@ -70,6 +70,10 @@ void Error_Handler(void);
 #define DIO1_GPIO_Port GPIOB
 #define MODE_MS_Pin GPIO_PIN_12
 #define MODE_MS_GPIO_Port GPIOB
+#define TEST2_Pin GPIO_PIN_14
+#define TEST2_GPIO_Port GPIOB
+#define TEST1_Pin GPIO_PIN_15
+#define TEST1_GPIO_Port GPIOB
 #define RXEN_Pin GPIO_PIN_3
 #define RXEN_GPIO_Port GPIOB
 #define TXEN_Pin GPIO_PIN_4

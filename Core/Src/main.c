@@ -458,7 +458,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(SPI1_NSS_GPIO_Port, SPI1_NSS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, NRST_Pin|RXEN_Pin|TXEN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, NRST_Pin|TEST2_Pin|TEST1_Pin|RXEN_Pin
+                          |TXEN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;
@@ -487,6 +488,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : TEST2_Pin TEST1_Pin */
+  GPIO_InitStruct.Pin = TEST2_Pin|TEST1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /*Configure GPIO pins : RXEN_Pin TXEN_Pin */
   GPIO_InitStruct.Pin = RXEN_Pin|TXEN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -494,11 +502,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : EXT6_BTN_Pin EXT7_DIO1_Pin */
-  GPIO_InitStruct.Pin = EXT6_BTN_Pin|EXT7_DIO1_Pin;
+  /*Configure GPIO pin : EXT6_BTN_Pin */
+  GPIO_InitStruct.Pin = EXT6_BTN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(EXT6_BTN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : EXT7_DIO1_Pin */
+  GPIO_InitStruct.Pin = EXT7_DIO1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(EXT7_DIO1_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
@@ -520,13 +534,12 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  int k=0;
 
   /* Infinite loop */
 	printf("%s Ver.%s %s %s\n", T_USTR ,REV_NUM,REV_DATE, REV_TIME);
   for(;;)
   {   //HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
-	  OUTTGL(LED);
+	 // OUTTGL(LED);
 	  //printf("%04d\n",k);k++;
 	  osDelay(1000);
   }

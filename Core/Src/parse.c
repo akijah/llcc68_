@@ -36,7 +36,7 @@ uint8_t CmdPerform(char *Buf)
 	 // char S[50], B[20];//,B[20];
 		uint8_t u1;
 		uint16_t URes;
-		uint32_t fl1;
+		//uint32_t fl1;
 	  //uint64_t Bb[MAX_SENS];  
 	
 		//printf("Convert: %s\n",Buf);
@@ -72,12 +72,12 @@ uint8_t CmdPerform(char *Buf)
 					printf("help,ver,baud,\n");
 					break;
 			case 	U(KEY_OUT,KEY_ON):
-					fl1=osEventFlagsSet (evt_id, 0x0004U);
+					osEventFlagsSet (evt_id, EV_TEST1);
 					//if(StrPtr)	u1=atoi(StrPtr);
 					//if((u1>0)&&(u1<=OUTn)) OUTON(u1-1);
 					break;
 			case 	U(KEY_OUT,KEY_OFF):
-					fl1=osEventFlagsSet (evt_id, 0x0008U);
+					osEventFlagsSet (evt_id, EV_TEST2);
 					//if(StrPtr)	u1=atoi(StrPtr);
 					//if((u1>0)&&(u1<=OUTn)) OUTOFF(u1-1);
 					break;
