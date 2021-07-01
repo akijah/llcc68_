@@ -76,7 +76,7 @@ uint8_t IsValue(char *S);
 //void Delay_us(uint16_t uSecs);
 //void Delay_ms(uint16_t mSecs);
 uint8_t KeyFind(char *S,const char **key);
-
+void prnbuf(uint8_t *buf,uint8_t len);
 uint32_t GetUID(uint8_t N);
 uint16_t GetFlashSize(void);
 extern uint8_t M2_STAT;

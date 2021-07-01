@@ -1,3 +1,3 @@
-#define REV_NUM "2.2.34"  
-#define REV_DATE  "16.10.2017" 
-#define REV_TIME  "17:20:27"
+#define REV_NUM "1.0.30"
+#define REV_DATE  "01.07.2021"
+#define REV_TIME  "18:17:27"
