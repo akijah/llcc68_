@@ -8,7 +8,9 @@
 #include "stm32f1xx_hal.h"
 #define T_USTR "E220 Module Test"
 
+// HAL_PWR_EnterSTANDBYMode();
 
+// __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
 
 //--------------------------------------------------------------------------------------------------------------
 //#define LEDTEST	 
@@ -20,7 +22,7 @@
 //#define USE_OT
 //#define USE_RCSWITCH
 //#define NEED_CLRRAM	 
-//#define USE_IWDG	 
+#define USE_IWDG
 //--------------------------------------------------------------------------------------------------------------	 
 	 
 #define IsDigit(c)	(((c)>='0')&&((c)<='9'))

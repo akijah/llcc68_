@@ -75,7 +75,23 @@ void prnbuf(uint8_t *buf,uint8_t len)
 
 
 //---------------------------------------------------------------------------------------------------
+/*#ifdef USE_IWDG
+static void MX_IWDG_Init(void)
+{
 
+  hiwdg.Instance = IWDG;
+	//  Reload 4095 Prescaler 4 -500ms 8-1 16-2 32-4 64-8сек 128-16 256 - 32сек
+
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_256;
+  hiwdg.Init.Reload = 4095;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+}
+
+#endif*/
 /*
 uint8_t GetOutState(Out_TypeDef outn)
 {  assert_param(IS_GPIO_PIN(OUT_PIN[outn])); 

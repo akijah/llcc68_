@@ -4,12 +4,14 @@
  *  Created on: 4 апр. 2021 г.
  *      Author: AKI
  */
+#include <string.h>
+#include <stdlib.h>
+
 #include "LoraDrv.h"
 #include "llcc68_hal.h"
 #include "llcc68.h"
 #include "stdio.h"
 #include "peripheral.h"
-#include "string.h"
 #include "cmsis_os2.h"
 
 
@@ -23,6 +25,7 @@ llcc68_chip_status_t radio_status;
 llcc68_rx_buffer_status_t rx_buffer_status;
 llcc68_pkt_status_lora_t pkt_status;
 bool isTX;
+uint8_t butcnt1;
 osEventFlagsId_t evt_id;                        // идентификатор очереди сообщений
 
 static void Lora_Init(void);
@@ -49,9 +52,17 @@ int Init_Events ( void )
 void StartLoraTask(void *argument)
 {	uint32_t flags;
 	Lora_Init();
+	uint32_t TimeDown,TimeUp;
+		 //ticks = portMAX_DELAY;
+	 //TimeNow=xTaskGetTickCount();
+	 //if(timewait==0) TimeEnd=TimeNow+1;
+	 //else	 TimeEnd=TimeNow+timewait*1000/ portTICK_PERIOD_MS;
+
+
 
 	//Init_Events ();
 	isTX=GETIN(MODE_MS);
+	//btncnt1=0;
 	printf("Start Lora module in %s mode\n",isTX?"Tx":"Rx");
 	if(!isTX)
 	{	llcc68_get_status(&llcc68, &radio_status);
@@ -68,11 +79,21 @@ void StartLoraTask(void *argument)
 
 		if(flags&EV_PUSHBUT1)
  		{
-		  if(GETIN(EXT6_BTN))
-		  {	  Transmit();
- 		  	   OUTOFF(LED);
- 		  	   OUTON(TEST1);
+
+		  if(!GETIN(EXT6_BTN))
+		  {	 TimeDown=osKernelGetTickCount();
+
+
+			  //Transmit();
+ 		  	  // OUTOFF(LED);
+ 		  	  // OUTON(TEST1);
 		  }
+		  else
+		  { TimeUp=osKernelGetTickCount();
+			printf("tim: %lu %lu %lu\n",TimeUp,TimeDown,TimeUp-TimeDown);
+
+		  }
+
 		  //osDelay(1000);
  		}
 
