@@ -22,7 +22,7 @@
 //#define USE_OT
 //#define USE_RCSWITCH
 //#define NEED_CLRRAM	 
-#define USE_IWDG
+//#define USE_IWDG
 //--------------------------------------------------------------------------------------------------------------	 
 	 
 #define IsDigit(c)	(((c)>='0')&&((c)<='9'))
