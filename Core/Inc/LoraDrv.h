@@ -194,13 +194,21 @@ llcc68_get_status(&llcc68, &radio_status);
 	EV_ALL		= 0x001FU
 };
 */
+typedef enum rfm_result_e
+{
+	 RR_OK	=0,
+	 RR_TX_ERR,
+	 RR_RX_ERR,
+	 RR_TIMEOUT,
 
-
+}rfm_result;
 
 //void StartLoraTask(void *argument);
 //int Init_Events ( void );
-void RFM_Transmit(const uint8_t *buf,const uint8_t len);
+rfm_result RFM_Transmit(const uint8_t *buf,const uint8_t len);
+rfm_result RFM_Receive(uint8_t *buf,uint8_t *len);
 void RFM_Init(void);
+void RFM_GetIRQ(void);
 #ifdef __cplusplus
 }
 #endif

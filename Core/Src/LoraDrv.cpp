@@ -227,63 +227,75 @@ void RFM_Init(void)
 
 }
 //------------------------------------------------------------------------------------------------------------
-void RFM_Transmit(const uint8_t *buf,const uint8_t len)
-{
-	        llcc68_write_buffer(&llcc68, 0, buf, len);
-			//OUTON(LED);
-			OUTON(TXEN);
-			llcc68_set_tx(&llcc68, 1000);
-			printf("TX:");
-			prnbuf(buf,len);
+rfm_result RFM_Transmit(const uint8_t *buf,const uint8_t len)
+{  uint8_t cnt=0;
+   rfm_result res=RR_TX_ERR;
+   OUTON(TXEN);
+   OUTOFF(LED);
+   printf("TX:");
+   prnbuf(buf,len);
+
+   while(1)
+   { llcc68_write_buffer(&llcc68, 0, buf, len);
+	 llcc68_set_tx(&llcc68, 1000);
+	 HAL_PWR_EnterSLEEPMode(0,PWR_SLEEPENTRY_WFI);// спим
+
+	//llcc68_get_irq_status(&llcc68, &irq_status);
+	printf("tx_irq_status: %04X\n",irq_status);
+	if (irq_status & (llcc68_irq_masks_e::LLCC68_IRQ_TX_DONE)){res=RR_OK; break;}
+	cnt++;
+
+	if(cnt>3) break;
+	HAL_Delay(1000); //Здесь тоже надо спать
+
+
+   };
+
+   printf("%s[%d]\n",(res==RR_OK)?"Ok":"Error",cnt);
+   OUTOFF(TXEN);
+   OUTON(LED);
+   return res;
 }
-
 //---------------------------------------------------------------------------------------------------
-void RFM_Receive(void)
-{
-	        llcc68_status_t res;
-		//	llcc68_get_irq_status(&llcc68, &irq_status);
-		//	llcc68_get_status(&llcc68, &radio_status);
-			OUTOFF(LED);
-			OUTON(TEST1);
-			OUTON(RXEN);
-			//llcc68_clear_irq_status(&llcc68, llcc68_irq_masks_e::LLCC68_IRQ_ALL);
-			//llcc68_get_irq_status(&llcc68, &irq_status);
-			//llcc68_clear_irq_status(&llcc68, llcc68_irq_masks_e::LLCC68_IRQ_RX_DONE);
-			//llcc68_get_irq_status(&llcc68, &irq_status);
-			res=llcc68_set_rx(&llcc68, LLCC68_RX_SINGLE_MODE); //Всегда в RX
-			/*
-			while (1)
-			{
-				llcc68_get_status(&llcc68, &radio_status);
-				llcc68_get_irq_status(&llcc68, &irq_status);
-				if (irq_status & (llcc68_irq_masks_e::LLCC68_IRQ_TIMEOUT))	break;
-				if (irq_status & (llcc68_irq_masks_e::LLCC68_IRQ_RX_DONE))	break;
-				if (radio_status.chip_mode != LLCC68_CHIP_MODE_RX) break;
-				//if (radio_status.chip_mode);
-				osDelay(100);
-				cnt++;
-			}
+rfm_result RFM_Receive(uint8_t *buf,uint8_t *len)
+{			rfm_result res=RR_RX_ERR;
 
+			//OUTOFF(LED);
+			//OUTON(TEST1);
+			OUTON(RXEN);
+			if(llcc68_set_rx(&llcc68,3000)!=llcc68_status_e::LLCC68_STATUS_OK) //Всегда в RX -LLCC68_RX_SINGLE_MODE
+			{
+				printf("Switch RX Mode error %d\n",res);
+				return res;
+			};
+			HAL_PWR_EnterSLEEPMode(0,PWR_SLEEPENTRY_WFI);// спим
+
+
+			printf("rx_irq_status: %04X\n",irq_status);
 			if (irq_status & (llcc68_irq_masks_e::LLCC68_IRQ_RX_DONE))
 			{
 
-				//OUTON(LED);
-
-				llcc68_clear_irq_status(&llcc68, irq_status);
 
 				llcc68_get_rx_buffer_status(&llcc68, &rx_buffer_status);
-
+				printf("rx available:%d start:%d\n",rx_buffer_status.pld_len_in_bytes, rx_buffer_status.buffer_start_pointer);
+  			    *len=16;
 				llcc68_get_lora_pkt_status(&llcc68, &pkt_status);
-				llcc68_read_buffer(&llcc68, 128, rx_buf, 16);
+			   llcc68_read_buffer(&llcc68, 128, buf, *len);
+			    prnbuf(buf,*len);
 				printf("cnt = %d rssi=%d dBm SRSSI=%d dBm SNR=%d dB\n",rx_buf[0],
-						pkt_status.rssi_pkt_in_dbm,pkt_status.signal_rssi_pkt_in_dbm,pkt_status.snr_pkt_in_db);
-				osDelay(10);
-				//OUTOFF(LED);
+				pkt_status.rssi_pkt_in_dbm,pkt_status.signal_rssi_pkt_in_dbm,pkt_status.snr_pkt_in_db);
+				res=RR_OK;
 			}
-			llcc68_get_status(&llcc68, &radio_status);
-			OUTOFF(RXEN);*/
+			if (irq_status & (llcc68_irq_masks_e::LLCC68_IRQ_TIMEOUT)) res=RR_TIMEOUT;
+
+			OUTOFF(RXEN);
+			return res;
 }
-
-
-
-
+//-------------------------------------------------------------------------------------------------------------
+void RFM_GetIRQ(void)
+{
+   llcc68_get_irq_status(&llcc68, &irq_status);
+   if(irq_status)
+	   llcc68_clear_irq_status(&llcc68, irq_status);
+}
+//-------------------------------------------------------------------------------------------------------------

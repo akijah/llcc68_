@@ -8,7 +8,7 @@
 #include "crc.h"
 sensorStates state;
 uint8_t serial[SERIAL_SIZE];
-uint8_t packet[PACKET_SIZE];
+uint8_t tx_packet[PACKET_SIZE],rx_packet[PACKET_SIZE];
 uint8_t myaddr;
 uint16_t panelcs; //
 
@@ -17,7 +17,9 @@ uint16_t panelcs; //
 void SS_Init(void)
 {
 	memset (serial,0,SERIAL_SIZE);
-	memset (packet,0,PACKET_SIZE);
+	memset (tx_packet,0,PACKET_SIZE);
+	memset (rx_packet,0,PACKET_SIZE);
+
 	myaddr=0;
 	panelcs=0;
 	state=ssCheckSerial;
@@ -26,24 +28,29 @@ void SS_Init(void)
 //------------------------------------------------------------------------------------------------------------
 uint8_t SS_CheckSerial(void)
 {
-   return 1;
+   return (serial[0]==SUF_WL);
 }
 //------------------------------------------------------------------------------------------------------------
 uint8_t SS_Register(void)
-{
-	packet[0]=16; //packet length
-	packet[1]=S_VERSION; //Protocol Version
-	packet[2]=S_TYPE;	 //Sensor Type
-	packet[3]=myaddr;	 //Sensor Address
-	packet[4]=0;		//LoCounter; 0 - Bind Packet
-	packet[5]=0;		//HiCounter;
-	memcpy(&packet[6],serial,SERIAL_SIZE); //Payload
-	*(uint16_t*)(&packet[14])=gen_crc16(packet, 14,panelcs);
+{   uint8_t rxlen;
+	rfm_result res;
+	tx_packet[0]=16; //packet length
+	tx_packet[1]=S_VERSION; //Protocol Version
+	tx_packet[2]=S_TYPE;	 //Sensor Type
+	tx_packet[3]=myaddr;	 //Sensor Address
+	tx_packet[4]=0;		//LoCounter; 0 - Bind Packet
+	tx_packet[5]=0;		//HiCounter;
+	memcpy(&tx_packet[6],serial,SERIAL_SIZE); //Payload
+	*(uint16_t*)(&tx_packet[14])=gen_crc16(tx_packet, 14,panelcs);
 	//Пытаемся передать
 
-	RFM_Transmit(packet,16);
+	if(RFM_Transmit(tx_packet,16)==RR_OK)
+	{
+		res=RFM_Receive(rx_packet,&rxlen);
 
-	return 1;
+
+	}
+	return 0;
 }
 //------------------------------------------------------------------------------------------------------------
 void SS_Tick(void)
@@ -61,8 +68,10 @@ void SS_Tick(void)
 	    			   GetClientID(serial);
 	    			   serial[0]=SUF_WL;
 	    			   prnbuf(serial,8);
+
 	    			}
 	    		}
+	    	    PushButTime=0;
 	    		if (SS_CheckSerial()) state = ssBlinkHaveNumber;
 	    	     else		    	       state = ssButtonWait;
 	    	    break;
@@ -92,7 +101,7 @@ void SS_Tick(void)
 
 	    		result=SS_Register();
 	    		printf("Register result %d\n",result);
-
+	    		while(1){};
 
 	    	   break;
 	    case   ssBlinkRegistered:		break;

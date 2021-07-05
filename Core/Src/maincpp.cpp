@@ -8,6 +8,8 @@
 #include "peripheral.h"
 #include "parse.h"
 #include "LoraDrv.h"
+#include "rev.h"
+#include "ssm.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,10 +46,6 @@ static void ClrRX1Buf(void)
 
 }
 //------------------------------------------------------------------------------------------------------
-void CliTask(void)
-{
-}
-//----------------------------------------------------------------------------------------------------------------------
 void mainloop()
 {    char c;
      static char p1;
@@ -57,13 +55,22 @@ void mainloop()
      ClrRX1Buf();
      p1=0;
 
-     printf("Init Cli Task ok\n");
+     RFM_Init();
+     SS_Init();
+     HAL_Delay(2000);
+     ScanButton();
+     printf("%s Ver.%s [%d] \n", T_USTR ,REV_NUM,PushButTime);
+     //printf("Init Cli Task ok\n");
  while(1)
  {
+
+	 SS_Tick();
+
+
   	c= GetRX1Buf();
      if(c=='\0')
      { HAL_Delay(200);
-       //return;
+       continue;
      }
      if((c!='\r')&&(c!='\n')&&(c!=';'))
 		   { if(p1==0)
@@ -76,7 +83,7 @@ void mainloop()
 			   R[R_Ptr++]=c;
 			   p1=0;
 			 };
-			 return;
+			 continue;
 			};
 		 if(((c=='\r')||(c==';'))&&(R_Ptr>0))
 			{  R[R_Ptr++]='\r';
@@ -120,7 +127,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 	}
 	if(GPIO_Pin==GPIO_PIN_7)
-	{
+	{	RFM_GetIRQ();
 		//fl1= osEventFlagsGet	(evt_id);
 
 

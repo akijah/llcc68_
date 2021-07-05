@@ -30,6 +30,7 @@ uint8_t ScanButton (void)
 
   while(1)
   {	  if(!GETIN(WKUP)) break;
+      if(PushButTime==50) OUTOFF(LED);
   	  if(PushButTime<255) PushButTime++;
   	  HAL_Delay(100);
   }
