@@ -1,6 +1,6 @@
 
 #include "peripheral.h"
-#include "string.h"
+#include <string.h>
 
 
 uint8_t M2_STAT ;
@@ -31,7 +31,7 @@ uint8_t ScanButton (void)
   while(1)
   {	  if(!GETIN(WKUP)) break;
   	  if(PushButTime<255) PushButTime++;
-  	  osDelay(100);
+  	  HAL_Delay(100);
   }
   return PushButTime;
 }
@@ -47,6 +47,18 @@ void ResetRTC(void)
 	    Error_Handler();
 	  }
 }
+//------------------------------------------------------------------
+void AlarmOff(void)
+{
+	if(HAL_RTC_DeactivateAlarm(&hrtc, RTC_ALARM_A)!= HAL_OK)
+	   {
+	     Error_Handler();
+	   }
+
+
+}
+//---------------------------------------------------------------------
+
 void ConvertUp(uint8_t *B,uint8_t len)
 { uint8_t i;
 	for(i=0;i<len;i++)
@@ -91,11 +103,38 @@ uint8_t KeyFind(char *S,const char **key)
 
 }
 //---------------------------------------------------------------------------------------------------
-void prnbuf(uint8_t *buf,uint8_t len)
+void prnbuf(const uint8_t *buf,const uint8_t len)
 {
 	for(uint8_t l=0;l<len;l++) printf("%02X ",buf[l]);
 	printf("[%d]\n",len);
 }
+//--------------------------------------------------------------------------------------------------------
+void GetClientID(uint8_t *S)
+{		//00540045_3436510A_32323534
+		//uint16_t X;  // x-coordinate
+        //uint16_t Y;  // y-coordinate
+        //uint8_t WAF;  // Wafer number
+        //char LOT[7];  // Lot number
+	/*old version
+	  uint32_t uid0=GetUID(0);
+	  sprintf(S,"%02X%02X%08X%08X",(uid0>>16)&0xFF,uid0&0xFF,GetUID(1),GetUID(2));
+	  dbg_printf("ClientID:%s\n",S);
+		return strlen(S);
+	*/
+
+	uint16_t *id0 =(uint16_t*)(UID_BASE);
+    uint16_t *id1 =(uint16_t*)(UID_BASE+2);
+	uint32_t *id2 =(uint32_t*)(UID_BASE+4);
+	uint32_t *id3 =(uint32_t*)(UID_BASE+8);
+	printf("Device ID:%04x-%04x-%08x-%08x",*id0,*id1,*id2,*id3);
+	memcpy(S,id2,4);
+	memcpy(S+4,id3,4);
+
+}
+//------------------------------------------------------------------------------------------------------------------
+
+
+
 
 
 //---------------------------------------------------------------------------------------------------

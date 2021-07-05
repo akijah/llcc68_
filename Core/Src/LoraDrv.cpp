@@ -12,7 +12,7 @@
 #include "llcc68.h"
 #include "stdio.h"
 #include "peripheral.h"
-#include "cmsis_os2.h"
+//#include "cmsis_os2.h"
 
 
 extern SPI_HandleTypeDef hspi1;
@@ -26,13 +26,13 @@ llcc68_rx_buffer_status_t rx_buffer_status;
 llcc68_pkt_status_lora_t pkt_status;
 bool isTX;
 uint8_t butcnt1;
-osEventFlagsId_t evt_id;                        // идентификатор очереди сообщений
+//osEventFlagsId_t evt_id;                        // идентификатор очереди сообщений
 
-static void Lora_Init(void);
-static void Transmit(void);
-static void Receive(void);
+//void RFM_Init(void);
+//static void Transmit(void);
+//static void Receive(void);
 
-int Init_Events ( void )
+/*int Init_Events ( void )
 {
 
   evt_id = osEventFlagsNew (NULL);
@@ -44,12 +44,12 @@ int Init_Events ( void )
     return -1;
   }
   return 0;
-}
+}*/
 
 
 
 
-void StartLoraTask(void *argument)
+/*void StartLoraTask(void *argument)
 {	uint32_t flags;
 	Lora_Init();
 	uint32_t TimeDown,TimeUp;
@@ -141,9 +141,9 @@ void StartLoraTask(void *argument)
 
 
 		  //osDelay(100);
-}
+}*/
 //------------------------------------------------------------------------------------------------------------
-void Lora_Init(void)
+void RFM_Init(void)
 {
 	    llcc68_pa_cfg_params_t pa_params;
 	    llcc68_mod_params_lora_t mod_params;
@@ -221,44 +221,26 @@ void Lora_Init(void)
 		llcc68_set_lora_sync_word( &llcc68, 0x12); //0x34
 
 		 llcc68_set_dio2_as_rf_sw_ctrl(&llcc68, true );
-		cnt = 0;
+
 
 
 
 }
 //------------------------------------------------------------------------------------------------------------
-void Transmit(void)
-{			cnt++;
-	        tx_buf[0] = cnt;
-			llcc68_write_buffer(&llcc68, 0, tx_buf, 16);
+void RFM_Transmit(const uint8_t *buf,const uint8_t len)
+{
+	        llcc68_write_buffer(&llcc68, 0, buf, len);
 			//OUTON(LED);
 			OUTON(TXEN);
 			llcc68_set_tx(&llcc68, 1000);
 			printf("TX:");
-			prnbuf(tx_buf,16);
-	/*		while (1)
-			{
-				llcc68_get_status(&llcc68, &radio_status);
-				llcc68_get_irq_status(&llcc68, &irq_status);
-				if (irq_status != 0)	break;
-				osDelay(100);
-			}
-
-			if (irq_status)
-			{
-				llcc68_clear_irq_status(&llcc68, irq_status);
-			}
-
-			llcc68_get_status(&llcc68, &radio_status);
-
-			//OUTOFF(LED);
-			OUTOFF(TXEN);*/
+			prnbuf(buf,len);
 }
 
 //---------------------------------------------------------------------------------------------------
-void Receive(void)
+void RFM_Receive(void)
 {
-	llcc68_status_t res;
+	        llcc68_status_t res;
 		//	llcc68_get_irq_status(&llcc68, &irq_status);
 		//	llcc68_get_status(&llcc68, &radio_status);
 			OUTOFF(LED);

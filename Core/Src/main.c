@@ -25,7 +25,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -33,6 +32,7 @@
 #include "peripheral.h"
 #include "rev.h"
 #include "LoraDrv.h"
+#include "ssm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,27 +62,7 @@ TIM_HandleTypeDef htim1;
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
 /* USER CODE BEGIN PV */
-osThreadId_t CliTaskHandle;
-const osThreadAttr_t CliTask_attributes = {
-  .name = "CliTask",
-  .stack_size = 512,//128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
-
-osThreadId_t LoraTaskHandle;
-const osThreadAttr_t LoraTask_attributes = {
-  .name = "LoraTask",
-  .stack_size = 512,//128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
 
 
 /* USER CODE END PV */
@@ -96,8 +76,6 @@ static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_IWDG_Init(void);
 static void MX_RTC_Init(void);
-void StartDefaultTask(void *argument);
-
 /* USER CODE BEGIN PFP */
 
 
@@ -154,8 +132,8 @@ int main(void)
   //PWR_FLAG_WU
   //PWR_FLAG_SB
   //PWR_FLAG_PVDO
-  int cn=0;
-  while(1)
+ // int cn=0;
+ /* while(1)
   { if(!__HAL_PWR_GET_FLAG(PWR_FLAG_WU))	break;
    __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
    cn++;
@@ -163,54 +141,14 @@ int main(void)
   printf("Reset Flags[%d]: %s, %s, %s\n",cn,__HAL_PWR_GET_FLAG(PWR_FLAG_WU)?"PWR_FLAG_WU":" ",
   		  	  	  	  	  	  	  	  __HAL_PWR_GET_FLAG(PWR_FLAG_SB)?"PWR_FLAG_SB":" ",
   		  	  	  	  	  	  	  	  __HAL_PWR_GET_FLAG(PWR_FLAG_PVDO)?"PWR_FLAG_PVDO":" ");
-
- // __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
+ */
+  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
   HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1);  //Просыпаемся по RTC Alarm или WKUP pin
+
+  mainloop();
 
   /* USER CODE END 2 */
 
-  /* Init scheduler */
-  osKernelInitialize();
-
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
-
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
-
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
-
-  /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  CliTaskHandle = osThreadNew(StartCliTask, NULL, &CliTask_attributes);
-
-  LoraTaskHandle = osThreadNew(StartLoraTask, NULL, &LoraTask_attributes);
-
-
-
-  /* USER CODE END RTOS_THREADS */
-
-  /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
-  Init_Events ( );
-  /* USER CODE END RTOS_EVENTS */
-
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
@@ -494,7 +432,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Channel5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
 
 }
@@ -584,7 +522,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(EXT7_DIO1_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
@@ -592,66 +530,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
-
-/* USER CODE BEGIN Header_StartDefaultTask */
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-	uint16_t ccc;
-	uint8_t LB;
-  /* Infinite loop */
-	 LB=ScanButton ();
-
-	printf("%s Ver.%s %s %s LB=%d\n", T_USTR ,REV_NUM,REV_DATE, REV_TIME,LB);
-	OUTON(TEST2);
-
-
-  for(;;)
-  {   ccc++;
-  	  printf("ccc=%d\n",ccc);
-	  //HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
-	  OUTTGL(TEST2);
-
-	  if(ccc==10)
-	  {	  printf("Go stendby\n");
-		  ResetRTC();
-		  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
-		  HAL_PWR_EnterSTANDBYMode();
-
-	  }
-	  //printf("%04d\n",k);k++;
-	//  HAL_IWDG_Refresh(&hiwdg);
-	  osDelay(1000);
-  }
-  /* USER CODE END 5 */
-}
-
- /**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM2 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  /* USER CODE BEGIN Callback 0 */
-
-  /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM2) {
-    HAL_IncTick();
-  }
-  /* USER CODE BEGIN Callback 1 */
-
-  /* USER CODE END Callback 1 */
-}
 
 /**
   * @brief  This function is executed in case of error occurrence.

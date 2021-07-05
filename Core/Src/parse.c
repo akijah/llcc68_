@@ -5,9 +5,9 @@
 #include "base.h"
 #include "peripheral.h"
 #include "LoraDrv.h"
-#include "cmsis_os2.h"
+//#include "cmsis_os2.h"
 #include "rev.h"
-extern osEventFlagsId_t evt_id;
+//extern osEventFlagsId_t evt_id;
 const char *engkey[] = {"VER","BAUD","TIME","RESET","HELP","OUT","ON","OFF",NULL};
 
 
@@ -45,7 +45,7 @@ uint8_t CmdPerform(char *Buf)
   	    cmd=Parser(&StrPtr);
 	
    
-	u1=0;URes=0;
+	URes=0;u1=0;
 	switch (cmd)
 		{ 	case U(KEY_VER,KEY_NONE):
 
@@ -72,12 +72,12 @@ uint8_t CmdPerform(char *Buf)
 					printf("help,ver,baud,\n");
 					break;
 			case 	U(KEY_OUT,KEY_ON):
-					osEventFlagsSet (evt_id, EV_TEST1);
+					//osEventFlagsSet (evt_id, EV_TEST1);
 					//if(StrPtr)	u1=atoi(StrPtr);
 					//if((u1>0)&&(u1<=OUTn)) OUTON(u1-1);
 					break;
 			case 	U(KEY_OUT,KEY_OFF):
-					osEventFlagsSet (evt_id, EV_TEST2);
+					//osEventFlagsSet (evt_id, EV_TEST2);
 					//if(StrPtr)	u1=atoi(StrPtr);
 					//if((u1>0)&&(u1<=OUTn)) OUTOFF(u1-1);
 					break;

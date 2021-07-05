@@ -78,13 +78,17 @@ uint8_t IsValue(char *S);
 //void Delay_us(uint16_t uSecs);
 //void Delay_ms(uint16_t mSecs);
 uint8_t KeyFind(char *S,const char **key);
-void prnbuf(uint8_t *buf,uint8_t len);
-uint32_t GetUID(uint8_t N);
-uint16_t GetFlashSize(void);
+void prnbuf(const uint8_t *buf,const uint8_t len);
+//uint32_t GetUID(uint8_t N);
+void GetClientID(uint8_t *S);
+//uint16_t GetFlashSize(void);
 void ResetRTC(void);
+void AlarmOff(void);
+
 uint8_t ScanButton (void);
 
 extern uint8_t M2_STAT;
+extern uint8_t PushButTime;
 
 #ifdef __cplusplus
 }

@@ -183,7 +183,7 @@ llcc68_get_status(&llcc68, &radio_status);
 
  */
 
-enum event_sig
+/*enum event_sig
 {
     EV_NONE 	= 0x0000U,
 	EV_PUSHBUT1 = 0x0001U,
@@ -193,12 +193,14 @@ enum event_sig
 	EV_TEST2	= 0x0010U,
 	EV_ALL		= 0x001FU
 };
+*/
 
 
 
-
-void StartLoraTask(void *argument);
-int Init_Events ( void );
+//void StartLoraTask(void *argument);
+//int Init_Events ( void );
+void RFM_Transmit(const uint8_t *buf,const uint8_t len);
+void RFM_Init(void);
 #ifdef __cplusplus
 }
 #endif
