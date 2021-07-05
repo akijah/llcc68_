@@ -4,7 +4,10 @@
 
 
 uint8_t M2_STAT ;
+uint8_t PushButTime;
+
 extern UART_HandleTypeDef huart1;
+extern RTC_HandleTypeDef hrtc;
 #ifdef __GNUC__
 /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -21,9 +24,29 @@ PUTCHAR_PROTOTYPE
   HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
   return ch;
 }
+//-------------------------------------------------------------------------
+uint8_t ScanButton (void)
+{ PushButTime=0;
+
+  while(1)
+  {	  if(!GETIN(WKUP)) break;
+  	  if(PushButTime<255) PushButTime++;
+  	  osDelay(100);
+  }
+  return PushButTime;
+}
 //----------------------------------------------------------------
+void ResetRTC(void)
+{	 RTC_TimeTypeDef sTime = {0};
+	  sTime.Hours = 0x1;
+	  sTime.Minutes = 0x0;
+	  sTime.Seconds = 0x0;
 
-
+	  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+}
 void ConvertUp(uint8_t *B,uint8_t len)
 { uint8_t i;
 	for(i=0;i<len;i++)
@@ -44,6 +67,7 @@ void ConvertUp(uint8_t *B,uint8_t len)
 	}	
 
 }
+//------------------------------------------------------------------------------------------------------
 
 
 //-------------------------------------------------------------------------------------------

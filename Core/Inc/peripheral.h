@@ -81,6 +81,9 @@ uint8_t KeyFind(char *S,const char **key);
 void prnbuf(uint8_t *buf,uint8_t len);
 uint32_t GetUID(uint8_t N);
 uint16_t GetFlashSize(void);
+void ResetRTC(void);
+uint8_t ScanButton (void);
+
 extern uint8_t M2_STAT;
 
 #ifdef __cplusplus

@@ -150,16 +150,23 @@ int main(void)
 
  // maincpp();
 
-  printf("Reset Flags: %s, %s, %s\n",__HAL_PWR_GET_FLAG(PWR_FLAG_WU)?"PWR_FLAG_WU":" ",
-		  	  	  	  	  	  	  	  __HAL_PWR_GET_FLAG(PWR_FLAG_SB)?"PWR_FLAG_SB":" ",
-		  	  	  	  	  	  	  	  __HAL_PWR_GET_FLAG(PWR_FLAG_PVDO)?"PWR_FLAG_PVDO":" ");
-  //__HAL_PWR_GET_FLAG
+   //__HAL_PWR_GET_FLAG
   //PWR_FLAG_WU
   //PWR_FLAG_SB
   //PWR_FLAG_PVDO
+  int cn=0;
+  while(1)
+  { if(!__HAL_PWR_GET_FLAG(PWR_FLAG_WU))	break;
+   __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
+   cn++;
+  }
+  printf("Reset Flags[%d]: %s, %s, %s\n",cn,__HAL_PWR_GET_FLAG(PWR_FLAG_WU)?"PWR_FLAG_WU":" ",
+  		  	  	  	  	  	  	  	  __HAL_PWR_GET_FLAG(PWR_FLAG_SB)?"PWR_FLAG_SB":" ",
+  		  	  	  	  	  	  	  	  __HAL_PWR_GET_FLAG(PWR_FLAG_PVDO)?"PWR_FLAG_PVDO":" ");
 
+ // __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
+  HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1);  //Просыпаемся по RTC Alarm или WKUP pin
 
-  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -300,6 +307,8 @@ static void MX_RTC_Init(void)
 
   /* USER CODE BEGIN RTC_Init 0 */
 
+	RTC_AlarmTypeDef Alarm;
+
   /* USER CODE END RTC_Init 0 */
 
   RTC_TimeTypeDef sTime = {0};
@@ -342,6 +351,16 @@ static void MX_RTC_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN RTC_Init 2 */
+  Alarm.AlarmTime.Hours=1;
+  Alarm.AlarmTime.Minutes=0;
+  Alarm.AlarmTime.Seconds=30;
+  Alarm.Alarm=RTC_ALARM_A;
+
+  if(HAL_RTC_SetAlarm(&hrtc, &Alarm, RTC_FORMAT_BCD)!= HAL_OK)
+   {
+     Error_Handler();
+   }
+
 
   /* USER CODE END RTC_Init 2 */
 
@@ -512,6 +531,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : WKUP_Pin */
+  GPIO_InitStruct.Pin = WKUP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(WKUP_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pin : SPI1_NSS_Pin */
   GPIO_InitStruct.Pin = SPI1_NSS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -579,16 +604,27 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
 	uint16_t ccc;
+	uint8_t LB;
   /* Infinite loop */
-	printf("%s Ver.%s %s %s\n", T_USTR ,REV_NUM,REV_DATE, REV_TIME);
+	 LB=ScanButton ();
+
+	printf("%s Ver.%s %s %s LB=%d\n", T_USTR ,REV_NUM,REV_DATE, REV_TIME,LB);
 	OUTON(TEST2);
+
+
   for(;;)
   {   ccc++;
   	  printf("ccc=%d\n",ccc);
 	  //HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
 	  OUTTGL(TEST2);
 
-	  if(ccc==10) HAL_PWR_EnterSTANDBYMode();
+	  if(ccc==10)
+	  {	  printf("Go stendby\n");
+		  ResetRTC();
+		  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
+		  HAL_PWR_EnterSTANDBYMode();
+
+	  }
 	  //printf("%04d\n",k);k++;
 	//  HAL_IWDG_Refresh(&hiwdg);
 	  osDelay(1000);
